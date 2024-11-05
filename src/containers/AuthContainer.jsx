@@ -1,90 +1,84 @@
-import React, { Component } from "react";
+import React, { useState, useEffect } from "react";
 import LoginModal from "../components/LoginModal";
 import { login, register } from "../utils/api";
 
-export default class AuthContainer extends Component {
-  state = {
-    isLogin: true,
-    form: {
-      username: "",
-      password: "",
-    },
-    loading: false,
-    error: null,
-  };
+const AuthContainer = ({ setToken }) => {
+  const [isLogin, setIsLogin] = useState(true);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [form, setForm] = useState({
+    username: "",
+    password: "",
+  })
 
-  componentDidMount() {
+  useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
-      this.props.setToken(token);
+      setToken(token);
     }
-  }
+  }, [setToken]);
 
-  toggleLogin = () => {
-    this.setState({ isLogin: !this.state.isLogin, error: null });
+  const toggleLogin = () => {
+    setIsLogin(!isLogin);
+    setError(null);
   };
 
-  handleChange = (e) => {
-    this.setState({
-      form: {
-        ...this.state.form,
-        [e.target.name]: e.target.value,
-      },
+  const handleChange = (e) => {
+    setForm({
+      ...form,
+      [e.target.name]: e.target.value,
     });
   };
 
-  handleSubmit = (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    this.setState({ loading: true, error: null });
+    setLoading(true);
+    setError(null);
 
-    if (this.state.isLogin) {
-      login(this.state.form)
+    if (isLogin) {
+      login(form)
         .then((res) => {
           localStorage.setItem("token", res.accessToken);
-          this.props.setToken(res.accessToken);
-          this.setState({
-            error: null,
-            form: { username: "", password: "" },
-          });
+          setToken(res.accessToken);
+          setError(null);
+          setForm({ username: "", password: "" });
         })
         .catch((err) => {
-          this.setState({ error: err.response.data.error });
+          setError(err.response.data.error);
         })
         .finally(() => {
-          this.setState({ loading: false });
+          setLoading(false);
         });
     } else {
-      register(this.state.form)
+      register(form)
         .then(() => {
           alert("register success");
-          this.setState({
-            isLogin: true,
-            error: null,
-            form: { username: "", password: "" },
-          });
+          setIsLogin(true);
+          setForm({ username: "", password: "" });
+          setError(null);
         })
         .catch((err) => {
-          this.setState({ error: err.response.data.error });
+          setError(err.response.data.error);
         })
         .finally(() => {
-          this.setState({ loading: false });
+          setLoading(false);
         });
     }
   };
 
-  render() {
-    return (
-      <div>
-        <LoginModal
-        form={this.state.form}
-          loading={this.state.loading}
-          error={this.state.error}
-          handleChange={this.handleChange}
-          isLogin={this.state.isLogin}
-          toggleLogin={this.toggleLogin}
-          handleSubmit={this.handleSubmit}
-        />
-      </div>
-    );
-  }
+  return (
+    <div>
+      <LoginModal
+        form={form}
+        loading={loading}
+        error={error}
+        handleChange={handleChange}
+        isLogin={isLogin}
+        toggleLogin={toggleLogin}
+        handleSubmit={handleSubmit}
+      />
+    </div>
+  );
 }
+
+export default AuthContainer;
